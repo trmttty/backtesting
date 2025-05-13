@@ -168,6 +168,8 @@ if st.sidebar.button("バックテスト実行"):
                 trades_df = pd.DataFrame(trades)
                 trades_df['EntryTime'] = pd.to_datetime(trades_df['EntryTime'])
                 trades_df['ExitTime'] = pd.to_datetime(trades_df['ExitTime'])
+                # Timedeltaを文字列に変換
+                trades_df['Duration'] = trades_df['Duration'].astype(str)
                 st.dataframe(trades_df)
             else:
                 st.write("取引は行われませんでした。")
