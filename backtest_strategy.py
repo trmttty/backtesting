@@ -8,6 +8,8 @@ class BaseStrategy(Strategy):
     基本戦略クラス
     """
     position_size = 100
+    stop_loss = 0
+    take_profit = 0
 
     def should_buy(self):
         """
@@ -19,7 +21,10 @@ class BaseStrategy(Strategy):
     def next(self):
         size = self.position_size / 100
         if not self.position and self.should_buy():
-            self.buy(size=size)
+            price = self.data.Close[-1]
+            sl = price - (price * self.stop_loss / 100) if self.stop_loss > 0 else None
+            tp = price + (price * self.take_profit / 100) if self.take_profit > 0 else None
+            self.buy(size=size, sl=sl, tp=tp)
 
 class MovingAverageCrossStrategy(BaseStrategy):
     """
