@@ -1,8 +1,15 @@
 import streamlit as st
+import pandas as pd
 from datetime import datetime, timedelta
 
 class UIManager:
     def __init__(self):
+        self.symbol = None
+        self.start_date = None
+        self.end_date = None
+        self.buy_strategy = None
+        self.strategy_params = {}
+        self.initial_cash = None
         self.setup_page_config()
 
     def setup_page_config(self):
@@ -81,20 +88,17 @@ class UIManager:
 
     def display_results(self, results, company_name, data, chart_manager):
         """結果の表示"""
-        self.display_company_info(company_name)
-        self.display_performance_metrics(results)
-        self.display_equity_curve(results, chart_manager)
-        self.display_price_chart(data, results, chart_manager)
-        self.display_trade_history(results)
+        # 企業情報の表示
+        st.header(f"{company_name} ({self.symbol})")
 
-    def display_company_info(self, company_name):
-        """企業情報の表示"""
-        st.write("### バックテスト結果")
-        st.write(f"**企業名**: {company_name}")
-        st.write(f"**シンボル**: {self.symbol}")
+        # 株価チャートと指標の表示
+        price_chart = chart_manager.create_price_chart(
+            data, results._trades, self.strategy_params, self.buy_strategy
+        )
+        st.plotly_chart(price_chart, use_container_width=True)
 
-    def display_performance_metrics(self, results):
-        """パフォーマンス指標の表示"""
+        # バックテスト結果の表示
+        st.header("バックテスト結果")
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric("総リターン", f"{results['Return [%]']:.2f}%")
@@ -105,26 +109,25 @@ class UIManager:
         with col4:
             st.metric("勝率", f"{results['Win Rate [%]']:.2f}%")
 
-    def display_equity_curve(self, results, chart_manager):
-        """エクイティカーブの表示"""
-        st.write("### エクイティカーブ")
-        fig = chart_manager.create_equity_chart(results['_equity_curve'])
-        st.plotly_chart(fig, use_container_width=True)
+        # エクイティカーブの表示
+        st.header("エクイティカーブ")
+        equity_chart = chart_manager.create_equity_chart(results['_equity_curve'])
+        st.plotly_chart(equity_chart, use_container_width=True)
 
-    def display_price_chart(self, data, results, chart_manager):
-        """株価チャートの表示"""
-        st.write("### 株価チャートと指標")
-        trades = results['_trades']
-        price_chart = chart_manager.create_price_chart(
-            data, trades, self.strategy_params, self.buy_strategy
-        )
-        st.plotly_chart(price_chart, use_container_width=True)
-
-    def display_trade_history(self, results):
-        """取引履歴の表示"""
-        st.write("### 取引履歴")
-        trades = results['_trades']
-        if len(trades) > 0:
-            st.dataframe(trades)
+        # 取引履歴の表示
+        st.header("取引履歴")
+        if len(results._trades) > 0:
+            trades_df = pd.DataFrame([
+                {
+                    "日付": trade['EntryTime'].strftime("%Y-%m-%d"),
+                    "取引": "買い" if trade['Size'] > 0 else "売り",
+                    "価格": f"${trade['EntryPrice']:.2f}",
+                    "数量": abs(trade['Size']),
+                    "損益": f"${trade['PnL']:.2f}",
+                    "損益率": f"{trade['PnL'] / (trade['EntryPrice'] * abs(trade['Size'])) * 100:.2f}%"
+                }
+                for _, trade in results._trades.iterrows()
+            ])
+            st.dataframe(trades_df, use_container_width=True)
         else:
-            st.write("取引は行われませんでした。") 
+            st.info("取引履歴はありません") 
