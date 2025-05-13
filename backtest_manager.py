@@ -1,7 +1,7 @@
 import streamlit as st
 import yfinance as yf
 from backtesting import Backtest
-from app.backtest_strategy import (
+from backtest_strategy import (
     MovingAverageCrossStrategy,
     RSIStrategy,
     MACDStrategy,

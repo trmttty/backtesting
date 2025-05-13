@@ -1,7 +1,7 @@
 import streamlit as st
-from app.chart_manager import ChartManager
-from app.ui_manager import UIManager
-from app.backtest_manager import BacktestManager
+from chart_manager import ChartManager
+from ui_manager import UIManager
+from backtest_manager import BacktestManager
 
 class BacktestApp:
     def __init__(self):
