@@ -165,15 +165,6 @@ if st.sidebar.button("バックテスト実行"):
             st.write("### 取引履歴")
             trades = results['_trades']
             if len(trades) > 0:
-                # DataFrameの列名を確認（デバッグ用表示を削除）
-                # st.write("取引データの列名:", trades.columns)
-                # データフレームを直接表示
                 st.dataframe(trades)
             else:
                 st.write("取引は行われませんでした。")
-            
-            # 詳細な統計情報
-            st.write("### 詳細な統計情報")
-            stats = pd.DataFrame(results).drop(['_equity_curve', '_trades'])
-            st.dataframe(stats)
-            
