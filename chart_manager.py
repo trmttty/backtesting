@@ -106,10 +106,10 @@ class ChartManager:
             return
 
         for _, trade in trades.iterrows():
-            if trade['Size'] > 0:
-                self._add_buy_marker(fig, trade)
-            else:
-                self._add_sell_marker(fig, trade)
+            # エントリー（買いシグナル）
+            self._add_buy_marker(fig, trade)
+            # イグジット（売りシグナル）
+            self._add_sell_marker(fig, trade)
 
     def _add_buy_marker(self, fig, trade):
         """買いマーカーの追加"""
@@ -131,7 +131,7 @@ class ChartManager:
                 x=[trade['ExitTime']],
                 y=[trade['ExitPrice']],
                 mode='markers',
-                marker=dict(symbol='triangle-down', size=10, color='red'),
+                marker=dict(symbol='triangle-down', size=15, color='purple'),
                 name='売りシグナル'
             ),
             row=1, col=1
