@@ -27,13 +27,16 @@ start_date = st.sidebar.date_input("開始日", default_start_date, max_value=to
 end_date = st.sidebar.date_input("終了日", today, min_value=start_date, max_value=today)
 
 # 戦略の選択
-strategy = st.sidebar.selectbox(
-    "戦略を選択",
+st.sidebar.header("取引ルール")
+
+# 買い戦略の選択
+buy_strategy = st.sidebar.selectbox(
+    "買い戦略",
     ["移動平均線クロスオーバー", "RSI", "MACD", "ボリンジャーバンド"]
 )
 
-# 戦略パラメータの設定
-if strategy == "移動平均線クロスオーバー":
+# 買い戦略のパラメータ設定
+if buy_strategy == "移動平均線クロスオーバー":
     fast_period = st.sidebar.slider("短期移動平均期間", 5, 50, 10)
     slow_period = st.sidebar.slider("長期移動平均期間", 20, 100, 30)
     strategy_class = MovingAverageCrossStrategy
@@ -41,7 +44,7 @@ if strategy == "移動平均線クロスオーバー":
         'fast_period': fast_period,
         'slow_period': slow_period
     }
-elif strategy == "RSI":
+elif buy_strategy == "RSI":
     rsi_period = st.sidebar.slider("RSI期間", 5, 30, 14)
     overbought = st.sidebar.slider("買われすぎ閾値", 50, 90, 70)
     oversold = st.sidebar.slider("売られすぎ閾値", 10, 50, 30)
@@ -51,7 +54,7 @@ elif strategy == "RSI":
         'overbought': overbought,
         'oversold': oversold
     }
-elif strategy == "MACD":
+elif buy_strategy == "MACD":
     fast_period = st.sidebar.slider("短期EMA期間", 5, 20, 12)
     slow_period = st.sidebar.slider("長期EMA期間", 20, 40, 26)
     signal_period = st.sidebar.slider("シグナル期間", 5, 15, 9)
@@ -70,17 +73,19 @@ else:  # ボリンジャーバンド
         'std_dev': std_dev
     }
 
+# 損切り設定
+stop_loss = st.sidebar.slider("損切り（%）", 0, 20, 5)
+
+# 利確設定
+take_profit = st.sidebar.slider("利確（%）", 0, 50, 20)
+
 # リスク管理パラメータ
 st.sidebar.header("リスク管理")
 initial_cash = st.sidebar.number_input("初期資金", 10000, 1000000, 100000, step=10000)
 position_size = st.sidebar.slider("ポジションサイズ（%）", 1, 100, 100)
-stop_loss = st.sidebar.slider("ストップロス（%）", 0, 20, 5)
-take_profit = st.sidebar.slider("利確（%）", 0, 50, 20)
 
 # strategy_paramsにリスク管理パラメータを追加
 strategy_params['position_size'] = position_size
-strategy_params['stop_loss'] = stop_loss
-strategy_params['take_profit'] = take_profit
 
 # データ取得
 @st.cache_data(ttl=3600)
@@ -114,6 +119,13 @@ if st.sidebar.button("バックテスト実行"):
                 commission=0.002,
                 exclusive_orders=True
             )
+            
+            # 損切りと利確の設定
+            if stop_loss > 0:
+                strategy_params['stop_loss'] = stop_loss
+            if take_profit > 0:
+                strategy_params['take_profit'] = take_profit
+            
             results = bt.run(**strategy_params)
             
             # 結果の表示
@@ -153,7 +165,6 @@ if st.sidebar.button("バックテスト実行"):
             st.write("### 取引履歴")
             trades = results['_trades']
             if len(trades) > 0:
-                # 取引履歴のデータ型を変換
                 trades_df = pd.DataFrame(trades)
                 trades_df['EntryTime'] = pd.to_datetime(trades_df['EntryTime'])
                 trades_df['ExitTime'] = pd.to_datetime(trades_df['ExitTime'])
