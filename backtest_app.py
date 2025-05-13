@@ -169,14 +169,14 @@ if st.sidebar.button("バックテスト実行"):
                 trades_list = []
                 for trade in trades:
                     trade_dict = {
-                        'EntryTime': pd.to_datetime(trade['EntryTime']),
-                        'ExitTime': pd.to_datetime(trade['ExitTime']),
-                        'Duration': f"{trade['Duration'].days}日 {trade['Duration'].seconds//3600}時間",
-                        'Size': round(trade['Size'], 2),
-                        'EntryPrice': round(trade['EntryPrice'], 2),
-                        'ExitPrice': round(trade['ExitPrice'], 2),
-                        'PnL': round(trade['PnL'], 2),
-                        'ReturnPct': round(trade['ReturnPct'], 2)
+                        'EntryTime': pd.to_datetime(trade.EntryTime),
+                        'ExitTime': pd.to_datetime(trade.ExitTime),
+                        'Duration': f"{trade.Duration.days}日 {trade.Duration.seconds//3600}時間",
+                        'Size': round(trade.Size, 2),
+                        'EntryPrice': round(trade.EntryPrice, 2),
+                        'ExitPrice': round(trade.ExitPrice, 2),
+                        'PnL': round(trade.PnL, 2),
+                        'ReturnPct': round(trade.ReturnPct, 2)
                     }
                     trades_list.append(trade_dict)
                 
