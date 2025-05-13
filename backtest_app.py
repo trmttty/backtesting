@@ -165,26 +165,10 @@ if st.sidebar.button("バックテスト実行"):
             st.write("### 取引履歴")
             trades = results['_trades']
             if len(trades) > 0:
-                # 取引データを辞書のリストに変換
-                trades_list = []
-                for trade in trades:
-                    # 取引データを辞書に変換
-                    trade_data = trade._asdict()
-                    trade_dict = {
-                        'EntryTime': pd.to_datetime(trade_data['EntryTime']),
-                        'ExitTime': pd.to_datetime(trade_data['ExitTime']),
-                        'Duration': f"{trade_data['Duration'].days}日 {trade_data['Duration'].seconds//3600}時間",
-                        'Size': round(trade_data['Size'], 2),
-                        'EntryPrice': round(trade_data['EntryPrice'], 2),
-                        'ExitPrice': round(trade_data['ExitPrice'], 2),
-                        'PnL': round(trade_data['PnL'], 2),
-                        'ReturnPct': round(trade_data['ReturnPct'], 2)
-                    }
-                    trades_list.append(trade_dict)
-                
-                # データフレームを作成
-                trades_df = pd.DataFrame(trades_list)
-                st.dataframe(trades_df)
+                # DataFrameの列名を確認（デバッグ用表示を削除）
+                # st.write("取引データの列名:", trades.columns)
+                # データフレームを直接表示
+                st.dataframe(trades)
             else:
                 st.write("取引は行われませんでした。")
             
