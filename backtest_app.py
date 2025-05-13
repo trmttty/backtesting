@@ -165,15 +165,23 @@ if st.sidebar.button("バックテスト実行"):
             st.write("### 取引履歴")
             trades = results['_trades']
             if len(trades) > 0:
-                trades_df = pd.DataFrame(trades)
-                # 日時カラムの変換
-                trades_df['EntryTime'] = pd.to_datetime(trades_df['EntryTime'])
-                trades_df['ExitTime'] = pd.to_datetime(trades_df['ExitTime'])
-                # Durationを文字列に変換（日数と時間の形式で）
-                trades_df['Duration'] = trades_df['Duration'].apply(lambda x: f"{x.days}日 {x.seconds//3600}時間")
-                # 数値カラムの小数点以下を2桁に制限
-                numeric_columns = ['Size', 'EntryPrice', 'ExitPrice', 'PnL', 'ReturnPct']
-                trades_df[numeric_columns] = trades_df[numeric_columns].round(2)
+                # 取引データを辞書のリストに変換
+                trades_list = []
+                for trade in trades:
+                    trade_dict = {
+                        'EntryTime': pd.to_datetime(trade['EntryTime']),
+                        'ExitTime': pd.to_datetime(trade['ExitTime']),
+                        'Duration': f"{trade['Duration'].days}日 {trade['Duration'].seconds//3600}時間",
+                        'Size': round(trade['Size'], 2),
+                        'EntryPrice': round(trade['EntryPrice'], 2),
+                        'ExitPrice': round(trade['ExitPrice'], 2),
+                        'PnL': round(trade['PnL'], 2),
+                        'ReturnPct': round(trade['ReturnPct'], 2)
+                    }
+                    trades_list.append(trade_dict)
+                
+                # データフレームを作成
+                trades_df = pd.DataFrame(trades_list)
                 st.dataframe(trades_df)
             else:
                 st.write("取引は行われませんでした。")
