@@ -35,6 +35,8 @@ class BacktestManager:
     def execute_backtest(self, data, strategy_name, strategy_params, initial_cash):
         """バックテストの実行"""
         strategy_class = self.strategy_classes[strategy_name]
+        strategy_params = dict(strategy_params)  # 破壊的変更を避ける
+        strategy_params['initial_cash'] = initial_cash
         bt = Backtest(
             data,
             strategy_class,

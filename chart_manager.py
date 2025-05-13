@@ -3,7 +3,7 @@ from plotly.subplots import make_subplots
 
 class ChartManager:
     def __init__(self):
-        self.chart_height = 800
+        self.chart_height = 1000
         self.chart_width = None  # use_container_widthを使用するためNone
 
     def create_price_chart(self, data, trades, strategy_params, buy_strategy):
@@ -118,7 +118,7 @@ class ChartManager:
                 x=[trade['EntryTime']],
                 y=[trade['EntryPrice']],
                 mode='markers',
-                marker=dict(symbol='triangle-up', size=10, color='green'),
+                marker=dict(symbol='triangle-up', size=15, color='yellow'),
                 name='買いシグナル'
             ),
             row=1, col=1
@@ -140,7 +140,6 @@ class ChartManager:
     def _update_layout(self, fig):
         """チャートのレイアウト更新"""
         fig.update_layout(
-            title='株価チャートと取引シグナル',
             xaxis_title='日付',
             yaxis_title='株価',
             height=self.chart_height,
@@ -157,7 +156,6 @@ class ChartManager:
             name='エクイティ'
         ))
         fig.update_layout(
-            title="エクイティカーブ",
             xaxis_title="日付",
             yaxis_title="エクイティ",
             showlegend=True

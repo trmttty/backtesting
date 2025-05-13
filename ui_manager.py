@@ -15,7 +15,6 @@ class UIManager:
     def setup_page_config(self):
         """ページ設定の初期化"""
         st.set_page_config(page_title="バックテストアプリ", layout="wide")
-        st.title("バックテストアプリ")
 
     def setup_sidebar(self):
         """サイドバーの設定"""
@@ -89,16 +88,26 @@ class UIManager:
     def display_results(self, results, company_name, data, chart_manager):
         """結果の表示"""
         # 企業情報の表示
-        st.header(f"{company_name} ({self.symbol})")
+        st.title(f"{company_name} ({self.symbol})")
+
+        # 通貨単位の設定
+        currency = "円" if ".T" in self.symbol else "ドル" if "." not in self.symbol else "現地通貨"
 
         # 株価チャートと指標の表示
+        st.header("株価チャート")
+        st.markdown(f"<div style='font-size:1.5rem; color:white; font-weight:bold;'>買い戦略：{self.buy_strategy}</div>", unsafe_allow_html=True)
         price_chart = chart_manager.create_price_chart(
             data, results._trades, self.strategy_params, self.buy_strategy
         )
         st.plotly_chart(price_chart, use_container_width=True)
 
         # バックテスト結果の表示
+        st.markdown("<br>", unsafe_allow_html=True)  # 小さな空白を追加
         st.header("バックテスト結果")
+        initial_cash = self.initial_cash
+        final_cash = int(results['_equity_curve'].Equity.iloc[-1])
+        diff = final_cash - initial_cash
+        # 1段目
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric("総リターン", f"{results['Return [%]']:.2f}%")
@@ -108,25 +117,40 @@ class UIManager:
             st.metric("最大ドローダウン", f"{results['Max. Drawdown [%]']:.2f}%")
         with col4:
             st.metric("勝率", f"{results['Win Rate [%]']:.2f}%")
+        # 2段目
+        trade_count = len(results._trades)
+        col5, col6, col7, col8 = st.columns(4)
+        with col5:
+            st.metric("取引回数", f"{trade_count}回")
+        with col6:
+            st.metric("初期資金", f"{initial_cash:,}{currency}")
+        with col7:
+            st.metric("最終資金", f"{final_cash:,}{currency}")
+        with col8:
+            st.metric("増減", f"{diff:+,}{currency}")
 
         # エクイティカーブの表示
+        st.markdown("<br><br><br>", unsafe_allow_html=True)  # より大きな空白を追加
         st.header("エクイティカーブ")
         equity_chart = chart_manager.create_equity_chart(results['_equity_curve'])
         st.plotly_chart(equity_chart, use_container_width=True)
 
         # 取引履歴の表示
+        st.markdown("<br>", unsafe_allow_html=True)  # 小さな空白を追加
         st.header("取引履歴")
         if len(results._trades) > 0:
             trades_df = pd.DataFrame([
                 {
-                    "日付": trade['EntryTime'].strftime("%Y-%m-%d"),
-                    "取引": "買い" if trade['Size'] > 0 else "売り",
-                    "価格": f"${trade['EntryPrice']:.2f}",
-                    "数量": abs(trade['Size']),
-                    "損益": f"${trade['PnL']:.2f}",
+                    "取引No.": i + 1,
+                    "購入日": trade['EntryTime'].strftime("%Y-%m-%d"),
+                    "購入価格": f"{trade['EntryPrice']:.2f}{currency}",
+                    "購入数量": int(abs(trade['Size'])),
+                    "売却日": trade['ExitTime'].strftime("%Y-%m-%d"),
+                    "売却価格": f"{trade['ExitPrice']:.2f}{currency}",
+                    "損益": f"{trade['PnL']:.2f}{currency}",
                     "損益率": f"{trade['PnL'] / (trade['EntryPrice'] * abs(trade['Size'])) * 100:.2f}%"
                 }
-                for _, trade in results._trades.iterrows()
+                for i, (_, trade) in enumerate(results._trades.iterrows())
             ])
             st.dataframe(trades_df, use_container_width=True)
         else:

@@ -10,6 +10,7 @@ class BaseStrategy(Strategy):
     position_size = 100
     stop_loss = 0
     take_profit = 0
+    initial_cash = 100000  # デフォルト値
 
     def should_buy(self):
         """
@@ -19,9 +20,10 @@ class BaseStrategy(Strategy):
         raise NotImplementedError("should_buy method must be implemented in child class")
 
     def next(self):
-        size = self.position_size / 100
-        if not self.position and self.should_buy():
-            price = self.data.Close[-1]
+        price = self.data.Close[-1]
+        investable_cash = self.initial_cash * self.position_size / 100
+        size = int(investable_cash // price)
+        if not self.position and self.should_buy() and size > 0:
             sl = price - (price * self.stop_loss / 100) if self.stop_loss > 0 else None
             tp = price + (price * self.take_profit / 100) if self.take_profit > 0 else None
             self.buy(size=size, sl=sl, tp=tp)
