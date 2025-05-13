@@ -32,6 +32,8 @@ class MovingAverageCrossStrategy(BaseStrategy):
     """
     fast_period = 10  # 短期移動平均の期間
     slow_period = 30  # 長期移動平均の期間
+    stop_loss = 0     # 損切り設定
+    take_profit = 0   # 利確設定
     
     def init(self):
         self.fast_ma = self.I(self.calculate_ma, self.data.Close, self.fast_period)
@@ -50,6 +52,8 @@ class RSIStrategy(BaseStrategy):
     rsi_period = 14  # RSIの期間
     overbought = 70  # 買われすぎの閾値
     oversold = 30    # 売られすぎの閾値
+    stop_loss = 0    # 損切り設定
+    take_profit = 0  # 利確設定
     
     def init(self):
         self.rsi = self.I(self.calculate_rsi, self.data.Close, self.rsi_period)
@@ -71,6 +75,8 @@ class MACDStrategy(BaseStrategy):
     fast_period = 12    # 短期EMAの期間
     slow_period = 26    # 長期EMAの期間
     signal_period = 9   # シグナル線の期間
+    stop_loss = 0       # 損切り設定
+    take_profit = 0     # 利確設定
     
     def init(self):
         self.macd = self.I(self.calculate_macd, self.data.Close)
@@ -93,6 +99,8 @@ class BollingerBandsStrategy(BaseStrategy):
     """
     period = 20        # 移動平均の期間
     std_dev = 2        # 標準偏差の倍率
+    stop_loss = 0      # 損切り設定
+    take_profit = 0    # 利確設定
     
     def init(self):
         self.middle_band = self.I(self.calculate_ma, self.data.Close, self.period)
