@@ -168,15 +168,17 @@ if st.sidebar.button("バックテスト実行"):
                 # 取引データを辞書のリストに変換
                 trades_list = []
                 for trade in trades:
+                    # 取引データを辞書に変換
+                    trade_data = trade._asdict()
                     trade_dict = {
-                        'EntryTime': pd.to_datetime(trade.EntryTime),
-                        'ExitTime': pd.to_datetime(trade.ExitTime),
-                        'Duration': f"{trade.Duration.days}日 {trade.Duration.seconds//3600}時間",
-                        'Size': round(trade.Size, 2),
-                        'EntryPrice': round(trade.EntryPrice, 2),
-                        'ExitPrice': round(trade.ExitPrice, 2),
-                        'PnL': round(trade.PnL, 2),
-                        'ReturnPct': round(trade.ReturnPct, 2)
+                        'EntryTime': pd.to_datetime(trade_data['EntryTime']),
+                        'ExitTime': pd.to_datetime(trade_data['ExitTime']),
+                        'Duration': f"{trade_data['Duration'].days}日 {trade_data['Duration'].seconds//3600}時間",
+                        'Size': round(trade_data['Size'], 2),
+                        'EntryPrice': round(trade_data['EntryPrice'], 2),
+                        'ExitPrice': round(trade_data['ExitPrice'], 2),
+                        'PnL': round(trade_data['PnL'], 2),
+                        'ReturnPct': round(trade_data['ReturnPct'], 2)
                     }
                     trades_list.append(trade_dict)
                 
