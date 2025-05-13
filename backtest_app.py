@@ -166,10 +166,14 @@ if st.sidebar.button("バックテスト実行"):
             trades = results['_trades']
             if len(trades) > 0:
                 trades_df = pd.DataFrame(trades)
+                # 日時カラムの変換
                 trades_df['EntryTime'] = pd.to_datetime(trades_df['EntryTime'])
                 trades_df['ExitTime'] = pd.to_datetime(trades_df['ExitTime'])
-                # Timedeltaを文字列に変換
-                trades_df['Duration'] = trades_df['Duration'].astype(str)
+                # Durationを文字列に変換（日数と時間の形式で）
+                trades_df['Duration'] = trades_df['Duration'].apply(lambda x: f"{x.days}日 {x.seconds//3600}時間")
+                # 数値カラムの小数点以下を2桁に制限
+                numeric_columns = ['Size', 'EntryPrice', 'ExitPrice', 'PnL', 'ReturnPct']
+                trades_df[numeric_columns] = trades_df[numeric_columns].round(2)
                 st.dataframe(trades_df)
             else:
                 st.write("取引は行われませんでした。")
