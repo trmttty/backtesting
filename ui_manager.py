@@ -93,16 +93,7 @@ class UIManager:
         # 通貨単位の設定
         currency = "円" if ".T" in self.symbol else "ドル" if "." not in self.symbol else "現地通貨"
 
-        # 株価チャートと指標の表示
-        st.header("株価チャート")
-        st.markdown(f"<div style='font-size:1.5rem; color:white; font-weight:bold;'>買い戦略：{self.buy_strategy}</div>", unsafe_allow_html=True)
-        price_chart = chart_manager.create_price_chart(
-            data, results._trades, self.strategy_params, self.buy_strategy
-        )
-        st.plotly_chart(price_chart, use_container_width=True)
-
         # バックテスト結果の表示
-        st.markdown("<br>", unsafe_allow_html=True)  # 小さな空白を追加
         st.header("バックテスト結果")
         initial_cash = self.initial_cash
         final_cash = int(results['_equity_curve'].Equity.iloc[-1])
@@ -129,8 +120,14 @@ class UIManager:
         with col8:
             st.metric("増減", f"{diff:+,}{currency}")
 
+        # 株価チャートと指標の表示
+        st.markdown(f"<div style='font-size:1.5rem; color:white; font-weight:bold;'>買い戦略：{self.buy_strategy}</div>", unsafe_allow_html=True)
+        price_chart = chart_manager.create_price_chart(
+            data, results._trades, self.strategy_params, self.buy_strategy
+        )
+        st.plotly_chart(price_chart, use_container_width=True)
+
         # エクイティカーブの表示
-        st.markdown("<br><br><br>", unsafe_allow_html=True)  # より大きな空白を追加
         st.header("エクイティカーブ")
         equity_chart = chart_manager.create_equity_chart(results['_equity_curve'])
         st.plotly_chart(equity_chart, use_container_width=True)
