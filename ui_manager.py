@@ -140,11 +140,11 @@ class UIManager:
                 {
                     "取引No.": i + 1,
                     "購入日": trade['EntryTime'].strftime("%Y-%m-%d"),
-                    "購入価格": f"{trade['EntryPrice']:.2f}{currency}",
+                    "購入価格": f"{round(trade['EntryPrice'])}{currency}",
                     "購入数量": int(abs(trade['Size'])),
                     "売却日": trade['ExitTime'].strftime("%Y-%m-%d"),
-                    "売却価格": f"{trade['ExitPrice']:.2f}{currency}",
-                    "損益": f"{trade['PnL']:.2f}{currency}",
+                    "売却価格": f"{round(trade['ExitPrice'])}{currency}",
+                    "損益": f"{round(trade['PnL'])}{currency}",
                     "損益率": f"{trade['PnL'] / (trade['EntryPrice'] * abs(trade['Size'])) * 100:.2f}%"
                 }
                 for i, (_, trade) in enumerate(results._trades.iterrows())
