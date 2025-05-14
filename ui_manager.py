@@ -1,9 +1,26 @@
+"""
+UI管理モジュール
+"""
+from typing import Dict, Any, Optional
+from datetime import datetime, timedelta
 import streamlit as st
 import pandas as pd
-from datetime import datetime, timedelta
 
 class UIManager:
-    def __init__(self):
+    """
+    UI管理クラス
+    
+    Attributes:
+        symbol (Optional[str]): 株式シンボル
+        start_date (Optional[datetime]): バックテスト開始日
+        end_date (Optional[datetime]): バックテスト終了日
+        buy_strategy (Optional[str]): 選択された戦略
+        strategy_params (Dict[str, Any]): 戦略パラメータ
+        initial_cash (Optional[int]): 初期資金
+    """
+    
+    def __init__(self) -> None:
+        """UIManagerの初期化"""
         self.symbol = None
         self.start_date = None
         self.end_date = None
@@ -12,23 +29,23 @@ class UIManager:
         self.initial_cash = None
         self.setup_page_config()
 
-    def setup_page_config(self):
+    def setup_page_config(self) -> None:
         """ページ設定の初期化"""
         st.set_page_config(page_title="バックテストアプリ", layout="wide")
 
-    def setup_sidebar(self):
+    def setup_sidebar(self) -> None:
         """サイドバーの設定"""
         self.setup_symbol_input()
         self.setup_date_input()
         self.setup_strategy_selection()
         self.setup_risk_management()
 
-    def setup_symbol_input(self):
+    def setup_symbol_input(self) -> None:
         """シンボル入力の設定"""
         st.sidebar.header("パラメータ設定")
         self.symbol = st.sidebar.text_input("シンボル", "7974.T").strip().upper()
 
-    def setup_date_input(self):
+    def setup_date_input(self) -> None:
         """日付入力の設定"""
         today = datetime.now().date()
         default_start_date = today - timedelta(days=365)
@@ -39,7 +56,7 @@ class UIManager:
             "終了日", today, min_value=self.start_date, max_value=today
         )
 
-    def setup_strategy_selection(self):
+    def setup_strategy_selection(self) -> None:
         """戦略選択の設定"""
         st.sidebar.header("取引ルール")
         self.buy_strategy = st.sidebar.selectbox(
@@ -48,9 +65,8 @@ class UIManager:
         )
         self.strategy_params = self.get_strategy_parameters()
 
-    def setup_risk_management(self):
+    def setup_risk_management(self) -> None:
         """リスク管理の設定"""
-        # 損切りと利確の設定を独立して追加
         st.sidebar.subheader("損切り・利確設定（オプション）")
         
         # 損切り設定
@@ -75,8 +91,13 @@ class UIManager:
             "初期資金", 10000, 1000000, 100000, step=10000
         )
 
-    def get_strategy_parameters(self):
-        """戦略パラメータの取得"""
+    def get_strategy_parameters(self) -> Dict[str, Any]:
+        """
+        戦略パラメータの取得
+        
+        Returns:
+            Dict[str, Any]: 戦略パラメータ
+        """
         params = {}
         if self.buy_strategy == "移動平均線クロスオーバー":
             params['fast_period'] = st.sidebar.slider("短期移動平均期間", 5, 50, 10)
@@ -94,8 +115,22 @@ class UIManager:
             params['std_dev'] = st.sidebar.slider("標準偏差倍率", 1.0, 3.0, 2.0, 0.1)
         return params
 
-    def display_results(self, results, company_name, data, chart_manager):
-        """結果の表示"""
+    def display_results(
+        self,
+        results: Any,
+        company_name: str,
+        data: pd.DataFrame,
+        chart_manager: Any
+    ) -> None:
+        """
+        バックテスト結果の表示
+        
+        Args:
+            results (Any): バックテスト結果
+            company_name (str): 企業名
+            data (pd.DataFrame): 株価データ
+            chart_manager (Any): チャート管理クラスのインスタンス
+        """
         # 企業情報の表示
         st.title(f"{company_name} ({self.symbol})")
 
@@ -107,6 +142,7 @@ class UIManager:
         initial_cash = self.initial_cash
         final_cash = int(results['_equity_curve'].Equity.iloc[-1])
         diff = final_cash - initial_cash
+        
         # 1段目
         col1, col2, col3, col4 = st.columns(4)
         with col1:
@@ -117,6 +153,7 @@ class UIManager:
             st.metric("最大ドローダウン", f"{results['Max. Drawdown [%]']:.2f}%")
         with col4:
             st.metric("勝率", f"{results['Win Rate [%]']:.2f}%")
+            
         # 2段目
         trade_count = len(results._trades)
         col5, col6, col7, col8 = st.columns(4)
@@ -130,7 +167,11 @@ class UIManager:
             st.metric("増減", f"{diff:+,}{currency}")
 
         # 株価チャートと指標の表示
-        st.markdown(f"<div style='font-size:1.5rem; color:white; font-weight:bold;'>買い戦略：{self.buy_strategy}</div>", unsafe_allow_html=True)
+        st.markdown(
+            f"<div style='font-size:1.5rem; color:white; font-weight:bold;'>"
+            f"買い戦略：{self.buy_strategy}</div>",
+            unsafe_allow_html=True
+        )
         price_chart = chart_manager.create_price_chart(
             data, results._trades, self.strategy_params, self.buy_strategy,
             title=f"株価チャート（{self.symbol}）"
@@ -145,7 +186,7 @@ class UIManager:
         st.plotly_chart(equity_chart, use_container_width=True)
 
         # 取引履歴の表示
-        st.markdown("<br>", unsafe_allow_html=True)  # 小さな空白を追加
+        st.markdown("<br>", unsafe_allow_html=True)
         st.header("取引履歴")
         if len(results._trades) > 0:
             trades_df = pd.DataFrame([

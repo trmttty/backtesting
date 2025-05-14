@@ -1,13 +1,46 @@
+"""
+チャート管理モジュール
+"""
+from typing import Dict, Any, Optional
+import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 class ChartManager:
-    def __init__(self):
+    """
+    チャート管理クラス
+    
+    Attributes:
+        chart_height (int): チャートの高さ
+        chart_width (Optional[int]): チャートの幅（Noneの場合はコンテナ幅に合わせる）
+    """
+    
+    def __init__(self) -> None:
+        """ChartManagerの初期化"""
         self.chart_height = 1000
         self.chart_width = None  # use_container_widthを使用するためNone
 
-    def create_price_chart(self, data, trades, strategy_params, buy_strategy, title=None):
-        """株価チャートと指標を生成する"""
+    def create_price_chart(
+        self,
+        data: pd.DataFrame,
+        trades: pd.DataFrame,
+        strategy_params: Dict[str, Any],
+        buy_strategy: str,
+        title: Optional[str] = None
+    ) -> go.Figure:
+        """
+        株価チャートと指標を生成する
+        
+        Args:
+            data (pd.DataFrame): 株価データ
+            trades (pd.DataFrame): 取引データ
+            strategy_params (Dict[str, Any]): 戦略パラメータ
+            buy_strategy (str): 使用する戦略の名前
+            title (Optional[str]): チャートのタイトル
+            
+        Returns:
+            go.Figure: 生成されたチャート
+        """
         fig = self._create_base_chart()
         self._add_candlestick(fig, data)
         self._add_technical_indicators(fig, data, strategy_params, buy_strategy)
@@ -15,8 +48,13 @@ class ChartManager:
         self._update_layout(fig, title=title)
         return fig
 
-    def _create_base_chart(self):
-        """基本チャートの作成"""
+    def _create_base_chart(self) -> go.Figure:
+        """
+        基本チャートの作成
+        
+        Returns:
+            go.Figure: 基本チャート
+        """
         return make_subplots(
             rows=3, cols=1,
             shared_xaxes=True,
@@ -24,8 +62,14 @@ class ChartManager:
             row_heights=[0.6, 0.2, 0.2]
         )
 
-    def _add_candlestick(self, fig, data):
-        """ローソクチャートの追加"""
+    def _add_candlestick(self, fig: go.Figure, data: pd.DataFrame) -> None:
+        """
+        ローソクチャートの追加
+        
+        Args:
+            fig (go.Figure): チャート
+            data (pd.DataFrame): 株価データ
+        """
         fig.add_trace(
             go.Candlestick(
                 x=data.index,
@@ -38,8 +82,22 @@ class ChartManager:
             row=1, col=1
         )
 
-    def _add_technical_indicators(self, fig, data, strategy_params, buy_strategy):
-        """技術指標の追加"""
+    def _add_technical_indicators(
+        self,
+        fig: go.Figure,
+        data: pd.DataFrame,
+        strategy_params: Dict[str, Any],
+        buy_strategy: str
+    ) -> None:
+        """
+        技術指標の追加
+        
+        Args:
+            fig (go.Figure): チャート
+            data (pd.DataFrame): 株価データ
+            strategy_params (Dict[str, Any]): 戦略パラメータ
+            buy_strategy (str): 使用する戦略の名前
+        """
         indicator_handlers = {
             "移動平均線クロスオーバー": self._add_moving_averages,
             "RSI": self._add_rsi,
@@ -51,8 +109,20 @@ class ChartManager:
         if handler:
             handler(fig, data, strategy_params)
 
-    def _add_moving_averages(self, fig, data, params):
-        """移動平均線の追加"""
+    def _add_moving_averages(
+        self,
+        fig: go.Figure,
+        data: pd.DataFrame,
+        params: Dict[str, Any]
+    ) -> None:
+        """
+        移動平均線の追加
+        
+        Args:
+            fig (go.Figure): チャート
+            data (pd.DataFrame): 株価データ
+            params (Dict[str, Any]): 戦略パラメータ
+        """
         fast_ma = data['Close'].rolling(window=params['fast_period']).mean()
         slow_ma = data['Close'].rolling(window=params['slow_period']).mean()
         fig.add_trace(go.Scatter(x=data.index, y=fast_ma, 
@@ -62,8 +132,20 @@ class ChartManager:
                                 name=f"長期MA({params['slow_period']})", 
                                 line=dict(color='red')), row=1, col=1)
 
-    def _add_rsi(self, fig, data, params):
-        """RSIの追加"""
+    def _add_rsi(
+        self,
+        fig: go.Figure,
+        data: pd.DataFrame,
+        params: Dict[str, Any]
+    ) -> None:
+        """
+        RSIの追加
+        
+        Args:
+            fig (go.Figure): チャート
+            data (pd.DataFrame): 株価データ
+            params (Dict[str, Any]): 戦略パラメータ
+        """
         delta = data['Close'].diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=params['rsi_period']).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(window=params['rsi_period']).mean()
@@ -76,8 +158,20 @@ class ChartManager:
         fig.add_hline(y=params['oversold'], line_dash="dash", 
                      line_color="green", row=2, col=1)
 
-    def _add_macd(self, fig, data, params):
-        """MACDの追加"""
+    def _add_macd(
+        self,
+        fig: go.Figure,
+        data: pd.DataFrame,
+        params: Dict[str, Any]
+    ) -> None:
+        """
+        MACDの追加
+        
+        Args:
+            fig (go.Figure): チャート
+            data (pd.DataFrame): 株価データ
+            params (Dict[str, Any]): 戦略パラメータ
+        """
         exp1 = data['Close'].ewm(span=params['fast_period'], adjust=False).mean()
         exp2 = data['Close'].ewm(span=params['slow_period'], adjust=False).mean()
         macd = exp1 - exp2
@@ -87,8 +181,20 @@ class ChartManager:
         fig.add_trace(go.Scatter(x=data.index, y=signal, name='Signal', 
                                 line=dict(color='red')), row=2, col=1)
 
-    def _add_bollinger_bands(self, fig, data, params):
-        """ボリンジャーバンドの追加"""
+    def _add_bollinger_bands(
+        self,
+        fig: go.Figure,
+        data: pd.DataFrame,
+        params: Dict[str, Any]
+    ) -> None:
+        """
+        ボリンジャーバンドの追加
+        
+        Args:
+            fig (go.Figure): チャート
+            data (pd.DataFrame): 株価データ
+            params (Dict[str, Any]): 戦略パラメータ
+        """
         ma = data['Close'].rolling(window=params['period']).mean()
         std = data['Close'].rolling(window=params['period']).std()
         upper = ma + (std * params['std_dev'])
@@ -100,8 +206,14 @@ class ChartManager:
         fig.add_trace(go.Scatter(x=data.index, y=lower, name='Lower Band', 
                                 line=dict(color='green')), row=1, col=1)
 
-    def _add_trade_markers(self, fig, trades):
-        """取引マーカーの追加"""
+    def _add_trade_markers(self, fig: go.Figure, trades: pd.DataFrame) -> None:
+        """
+        取引マーカーの追加
+        
+        Args:
+            fig (go.Figure): チャート
+            trades (pd.DataFrame): 取引データ
+        """
         if trades is None or len(trades) == 0:
             return
 
@@ -111,8 +223,14 @@ class ChartManager:
             # イグジット（売りシグナル）
             self._add_sell_marker(fig, trade)
 
-    def _add_buy_marker(self, fig, trade):
-        """買いマーカーの追加"""
+    def _add_buy_marker(self, fig: go.Figure, trade: pd.Series) -> None:
+        """
+        買いマーカーの追加
+        
+        Args:
+            fig (go.Figure): チャート
+            trade (pd.Series): 取引データ
+        """
         fig.add_trace(
             go.Scatter(
                 x=[trade['EntryTime']],
@@ -124,8 +242,14 @@ class ChartManager:
             row=1, col=1
         )
 
-    def _add_sell_marker(self, fig, trade):
-        """売りマーカーの追加"""
+    def _add_sell_marker(self, fig: go.Figure, trade: pd.Series) -> None:
+        """
+        売りマーカーの追加
+        
+        Args:
+            fig (go.Figure): チャート
+            trade (pd.Series): 取引データ
+        """
         fig.add_trace(
             go.Scatter(
                 x=[trade['ExitTime']],
@@ -137,8 +261,14 @@ class ChartManager:
             row=1, col=1
         )
 
-    def _update_layout(self, fig, title=None):
-        """チャートのレイアウト更新"""
+    def _update_layout(self, fig: go.Figure, title: Optional[str] = None) -> None:
+        """
+        チャートのレイアウト更新
+        
+        Args:
+            fig (go.Figure): チャート
+            title (Optional[str]): チャートのタイトル
+        """
         fig.update_layout(
             title=title,
             xaxis_title='日付',
@@ -147,8 +277,21 @@ class ChartManager:
             showlegend=True
         )
 
-    def create_equity_chart(self, equity_curve, title=None):
-        """エクイティカーブの作成"""
+    def create_equity_chart(
+        self,
+        equity_curve: pd.DataFrame,
+        title: Optional[str] = None
+    ) -> go.Figure:
+        """
+        エクイティカーブの作成
+        
+        Args:
+            equity_curve (pd.DataFrame): エクイティカーブデータ
+            title (Optional[str]): チャートのタイトル
+            
+        Returns:
+            go.Figure: 生成されたチャート
+        """
         fig = go.Figure()
         fig.add_trace(go.Scatter(
             x=equity_curve.index,
