@@ -7,17 +7,17 @@ class BaseStrategy(Strategy):
     """
     基本戦略クラス
     """
-    position_size = 100
-    stop_loss = 0
-    take_profit = 0
-    initial_cash = 100000  # デフォルト値
+    initial_cash = 100000  # 初期資金
+    position_size = 100    # ポジションサイズ（100%固定）
+    stop_loss = 0         # 損切り設定
+    take_profit = 0       # 利確設定
 
     def init(self):
-        # run()で渡されたパラメータをインスタンス変数にセット
+        # 初期資金とリスク管理の設定
+        self.initial_cash = getattr(self, 'initial_cash', 100000)
+        self.position_size = getattr(self, 'position_size', 100)  # 100%固定
         self.stop_loss = getattr(self, 'stop_loss', 0)
         self.take_profit = getattr(self, 'take_profit', 0)
-        self.position_size = getattr(self, 'position_size', 100)
-        self.initial_cash = getattr(self, 'initial_cash', 100000)
 
     def should_buy(self):
         """
@@ -35,8 +35,7 @@ class BaseStrategy(Strategy):
 
     def next(self):
         price = self.data.Close[-1]
-        investable_cash = self.initial_cash * self.position_size / 100
-        size = int(investable_cash // price)
+        size = int(self.initial_cash // price)  # 初期資金を100%使用
         
         # ポジションがない場合の買いシグナル
         if not self.position and self.should_buy() and size > 0:

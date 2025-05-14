@@ -69,13 +69,11 @@ class UIManager:
                 "利確（%）", 1.0, 50.0, 10.0, 0.5
             )
 
-        # リスク管理の設定
-        st.sidebar.header("リスク管理")
+        # 初期資金の設定
+        st.sidebar.header("初期資金")
         self.initial_cash = st.sidebar.number_input(
             "初期資金", 10000, 1000000, 100000, step=10000
         )
-        self.position_size = st.sidebar.slider("ポジションサイズ（%）", 1, 100, 100)
-        self.strategy_params['position_size'] = self.position_size
 
     def get_strategy_parameters(self):
         """戦略パラメータの取得"""
