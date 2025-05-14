@@ -16,11 +16,15 @@ class BaseStrategy(Strategy):
         position_size (int): ポジションサイズ（100%固定）
         stop_loss (float): 損切り設定（%）
         take_profit (float): 利確設定（%）
+        use_trailing_stop (bool): トレイリングストップを使用するかどうか
+        trailing_stop_pct (float): トレイリングストップの設定（%）
     """
     initial_cash = 100000  # 初期資金
     position_size = 100    # ポジションサイズ（100%固定）
     stop_loss = 0         # 損切り設定
     take_profit = 0       # 利確設定
+    use_trailing_stop = False  # トレイリングストップを使用するかどうか
+    trailing_stop_pct = 0      # トレイリングストップの設定
 
     def init(self) -> None:
         """
@@ -31,6 +35,9 @@ class BaseStrategy(Strategy):
         self.position_size = getattr(self, 'position_size', 100)  # 100%固定
         self.stop_loss = getattr(self, 'stop_loss', 0)
         self.take_profit = getattr(self, 'take_profit', 0)
+        self.use_trailing_stop = getattr(self, 'use_trailing_stop', False)
+        self.trailing_stop_pct = getattr(self, 'trailing_stop_pct', 0)
+        self.trailing_stop = None  # トレイリングストップ価格
 
     def should_buy(self) -> bool:
         """
@@ -72,10 +79,29 @@ class BaseStrategy(Strategy):
             
             # 注文の実行
             self.buy(size=size, sl=sl, tp=tp)
+            
+            # トレイリングストップの初期化
+            if self.use_trailing_stop:
+                self.trailing_stop = price * (1 - self.trailing_stop_pct / 100)
         
-        # ポジションがある場合の売りシグナル
-        elif self.position and self.should_sell():
-            self.position.close()
+        # ポジションがある場合の処理
+        elif self.position:
+            # トレイリングストップの処理
+            if self.use_trailing_stop:
+                # 新しいストップ価格の計算
+                new_stop = price * (1 - self.trailing_stop_pct / 100)
+                # ストップ価格の更新（上昇時のみ）
+                if new_stop > self.trailing_stop:
+                    self.trailing_stop = new_stop
+                
+                # ストップ価格に到達したらクローズ
+                if price <= self.trailing_stop:
+                    self.position.close()
+                    return
+            
+            # 通常の売りシグナル
+            if self.should_sell():
+                self.position.close()
 
 class MovingAverageCrossStrategy(BaseStrategy):
     """

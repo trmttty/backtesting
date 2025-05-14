@@ -85,6 +85,15 @@ class UIManager:
                 "利確（%）", 1.0, 50.0, 10.0, 0.5
             )
 
+        # トレイリングストップ設定
+        use_trailing_stop = st.sidebar.checkbox("トレイリングストップを使用する", value=False)
+        self.strategy_params['use_trailing_stop'] = use_trailing_stop
+        self.strategy_params['trailing_stop_pct'] = 0  # デフォルト値
+        if use_trailing_stop:
+            self.strategy_params['trailing_stop_pct'] = st.sidebar.slider(
+                "トレイリングストップ（%）", 1.0, 20.0, 5.0, 0.5
+            )
+
         # 初期資金の設定
         st.sidebar.header("初期資金")
         self.initial_cash = st.sidebar.number_input(
