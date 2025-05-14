@@ -123,13 +123,16 @@ class UIManager:
         # 株価チャートと指標の表示
         st.markdown(f"<div style='font-size:1.5rem; color:white; font-weight:bold;'>買い戦略：{self.buy_strategy}</div>", unsafe_allow_html=True)
         price_chart = chart_manager.create_price_chart(
-            data, results._trades, self.strategy_params, self.buy_strategy
+            data, results._trades, self.strategy_params, self.buy_strategy,
+            title=f"株価チャート（{self.symbol}）"
         )
         st.plotly_chart(price_chart, use_container_width=True)
 
         # エクイティカーブの表示
-        st.header("エクイティカーブ")
-        equity_chart = chart_manager.create_equity_chart(results['_equity_curve'])
+        equity_chart = chart_manager.create_equity_chart(
+            results['_equity_curve'],
+            title=f"エクイティカーブ（{self.symbol}）"
+        )
         st.plotly_chart(equity_chart, use_container_width=True)
 
         # 取引履歴の表示

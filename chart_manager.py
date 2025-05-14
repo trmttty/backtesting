@@ -6,13 +6,13 @@ class ChartManager:
         self.chart_height = 1000
         self.chart_width = None  # use_container_widthを使用するためNone
 
-    def create_price_chart(self, data, trades, strategy_params, buy_strategy):
+    def create_price_chart(self, data, trades, strategy_params, buy_strategy, title=None):
         """株価チャートと指標を生成する"""
         fig = self._create_base_chart()
         self._add_candlestick(fig, data)
         self._add_technical_indicators(fig, data, strategy_params, buy_strategy)
         self._add_trade_markers(fig, trades)
-        self._update_layout(fig)
+        self._update_layout(fig, title=title)
         return fig
 
     def _create_base_chart(self):
@@ -137,16 +137,17 @@ class ChartManager:
             row=1, col=1
         )
 
-    def _update_layout(self, fig):
+    def _update_layout(self, fig, title=None):
         """チャートのレイアウト更新"""
         fig.update_layout(
+            title=title,
             xaxis_title='日付',
             yaxis_title='株価',
             height=self.chart_height,
             showlegend=True
         )
 
-    def create_equity_chart(self, equity_curve):
+    def create_equity_chart(self, equity_curve, title=None):
         """エクイティカーブの作成"""
         fig = go.Figure()
         fig.add_trace(go.Scatter(
@@ -156,6 +157,7 @@ class ChartManager:
             name='エクイティ'
         ))
         fig.update_layout(
+            title=title,
             xaxis_title="日付",
             yaxis_title="エクイティ",
             showlegend=True
