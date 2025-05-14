@@ -43,28 +43,39 @@ class UIManager:
         """戦略選択の設定"""
         st.sidebar.header("取引ルール")
         self.buy_strategy = st.sidebar.selectbox(
-            "買い戦略",
+            "戦略",
             ["移動平均線クロスオーバー", "RSI", "MACD", "ボリンジャーバンド"]
         )
         self.strategy_params = self.get_strategy_parameters()
 
     def setup_risk_management(self):
         """リスク管理の設定"""
+        # 損切りと利確の設定を独立して追加
+        st.sidebar.subheader("損切り・利確設定（オプション）")
+        
+        # 損切り設定
+        use_stop_loss = st.sidebar.checkbox("損切りを使用する", value=False)
+        self.strategy_params['stop_loss'] = 0  # デフォルト値
+        if use_stop_loss:
+            self.strategy_params['stop_loss'] = st.sidebar.slider(
+                "損切り（%）", 1.0, 20.0, 5.0, 0.5
+            )
+        
+        # 利確設定
+        use_take_profit = st.sidebar.checkbox("利確を使用する", value=False)
+        self.strategy_params['take_profit'] = 0  # デフォルト値
+        if use_take_profit:
+            self.strategy_params['take_profit'] = st.sidebar.slider(
+                "利確（%）", 1.0, 50.0, 10.0, 0.5
+            )
+
+        # リスク管理の設定
         st.sidebar.header("リスク管理")
         self.initial_cash = st.sidebar.number_input(
             "初期資金", 10000, 1000000, 100000, step=10000
         )
         self.position_size = st.sidebar.slider("ポジションサイズ（%）", 1, 100, 100)
         self.strategy_params['position_size'] = self.position_size
-
-        # 損切りと利確の設定を追加
-        st.sidebar.subheader("損切り・利確設定")
-        self.strategy_params['stop_loss'] = st.sidebar.slider(
-            "損切り（%）", 1.0, 20.0, 5.0, 0.5
-        )
-        self.strategy_params['take_profit'] = st.sidebar.slider(
-            "利確（%）", 1.0, 50.0, 10.0, 0.5
-        )
 
     def get_strategy_parameters(self):
         """戦略パラメータの取得"""

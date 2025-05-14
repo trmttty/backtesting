@@ -36,7 +36,16 @@ class BacktestManager:
         """バックテストの実行"""
         strategy_class = self.strategy_classes[strategy_name]
         strategy_params = dict(strategy_params)  # 破壊的変更を避ける
+        
+        # 基本パラメータの設定
         strategy_params['initial_cash'] = initial_cash
+        
+        # 損切り・利確の設定
+        if 'stop_loss' in strategy_params:
+            strategy_params['stop_loss'] = float(strategy_params['stop_loss'])
+        if 'take_profit' in strategy_params:
+            strategy_params['take_profit'] = float(strategy_params['take_profit'])
+        
         bt = Backtest(
             data,
             strategy_class,

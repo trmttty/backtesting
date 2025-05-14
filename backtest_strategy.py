@@ -12,6 +12,13 @@ class BaseStrategy(Strategy):
     take_profit = 0
     initial_cash = 100000  # デフォルト値
 
+    def init(self):
+        # run()で渡されたパラメータをインスタンス変数にセット
+        self.stop_loss = getattr(self, 'stop_loss', 0)
+        self.take_profit = getattr(self, 'take_profit', 0)
+        self.position_size = getattr(self, 'position_size', 100)
+        self.initial_cash = getattr(self, 'initial_cash', 100000)
+
     def should_buy(self):
         """
         買いシグナルを生成するメソッド
@@ -19,14 +26,34 @@ class BaseStrategy(Strategy):
         """
         raise NotImplementedError("should_buy method must be implemented in child class")
 
+    def should_sell(self):
+        """
+        売りシグナルを生成するメソッド
+        子クラスで実装する必要がある
+        """
+        raise NotImplementedError("should_sell method must be implemented in child class")
+
     def next(self):
         price = self.data.Close[-1]
         investable_cash = self.initial_cash * self.position_size / 100
         size = int(investable_cash // price)
+        
+        # ポジションがない場合の買いシグナル
         if not self.position and self.should_buy() and size > 0:
-            sl = price - (price * self.stop_loss / 100) if self.stop_loss > 0 else None
-            tp = price + (price * self.take_profit / 100) if self.take_profit > 0 else None
+            # stop_lossとtake_profitの値を取得
+            stop_loss_pct = self.stop_loss if hasattr(self, 'stop_loss') else 0
+            take_profit_pct = self.take_profit if hasattr(self, 'take_profit') else 0
+            
+            # 損切り・利確の設定（値が0より大きい場合のみ設定）
+            sl = price - (price * stop_loss_pct / 100) if stop_loss_pct > 0 else None
+            tp = price + (price * take_profit_pct / 100) if take_profit_pct > 0 else None
+            
+            # 注文の実行
             self.buy(size=size, sl=sl, tp=tp)
+        
+        # ポジションがある場合の売りシグナル
+        elif self.position and self.should_sell():
+            self.position.close()
 
 class MovingAverageCrossStrategy(BaseStrategy):
     """
@@ -38,6 +65,7 @@ class MovingAverageCrossStrategy(BaseStrategy):
     take_profit = 0   # 利確設定
     
     def init(self):
+        super().init()
         self.fast_ma = self.I(self.calculate_ma, self.data.Close, self.fast_period)
         self.slow_ma = self.I(self.calculate_ma, self.data.Close, self.slow_period)
     
@@ -46,6 +74,9 @@ class MovingAverageCrossStrategy(BaseStrategy):
     
     def should_buy(self):
         return crossover(self.fast_ma, self.slow_ma)
+    
+    def should_sell(self):
+        return crossover(self.slow_ma, self.fast_ma)
 
 class RSIStrategy(BaseStrategy):
     """
@@ -58,6 +89,7 @@ class RSIStrategy(BaseStrategy):
     take_profit = 0  # 利確設定
     
     def init(self):
+        super().init()
         self.rsi = self.I(self.calculate_rsi, self.data.Close, self.rsi_period)
     
     def calculate_rsi(self, prices, period):
@@ -69,6 +101,9 @@ class RSIStrategy(BaseStrategy):
     
     def should_buy(self):
         return self.rsi[-1] < self.oversold
+    
+    def should_sell(self):
+        return self.rsi[-1] > self.overbought
 
 class MACDStrategy(BaseStrategy):
     """
@@ -81,6 +116,7 @@ class MACDStrategy(BaseStrategy):
     take_profit = 0     # 利確設定
     
     def init(self):
+        super().init()
         self.macd = self.I(self.calculate_macd, self.data.Close)
         self.signal = self.I(self.calculate_signal, self.macd)
     
@@ -94,6 +130,9 @@ class MACDStrategy(BaseStrategy):
     
     def should_buy(self):
         return crossover(self.macd, self.signal)
+    
+    def should_sell(self):
+        return crossover(self.signal, self.macd)
 
 class BollingerBandsStrategy(BaseStrategy):
     """
@@ -105,8 +144,10 @@ class BollingerBandsStrategy(BaseStrategy):
     take_profit = 0    # 利確設定
     
     def init(self):
+        super().init()
         self.middle_band = self.I(self.calculate_ma, self.data.Close, self.period)
         self.std = self.I(self.calculate_std, self.data.Close, self.period)
+        self.upper_band = self.I(self.calculate_upper_band, self.middle_band, self.std)
         self.lower_band = self.I(self.calculate_lower_band, self.middle_band, self.std)
     
     def calculate_ma(self, prices, period):
@@ -115,8 +156,14 @@ class BollingerBandsStrategy(BaseStrategy):
     def calculate_std(self, prices, period):
         return pd.Series(prices).rolling(period).std()
     
+    def calculate_upper_band(self, ma, std):
+        return ma + (std * self.std_dev)
+    
     def calculate_lower_band(self, ma, std):
         return ma - (std * self.std_dev)
     
     def should_buy(self):
-        return self.data.Close[-1] < self.lower_band[-1] 
+        return self.data.Close[-1] < self.lower_band[-1]
+    
+    def should_sell(self):
+        return self.data.Close[-1] > self.upper_band[-1] 
